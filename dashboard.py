@@ -12,13 +12,12 @@ from supabase import create_client, Client
 # 1. SETUP CREDENTIALS
 # ==========================================
 # Google Gemini Key
-GEMINI_API_KEY = "AQ.Ab8RN6I-nXmjfYicfqZa-RbCY79C5wla7r9wMdE84g-gNp0uBA"
-genai.configure(api_key=GEMINI_API_KEY)
+GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('models/gemini-3.6-flash')
 
 # Supabase Cloud Database Credentials
-SUPABASE_URL = "https://gdyhsdhowjefjhgrcotm.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeWhzZGhvd2plZmpoZ3Jjb3RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4NjE1NzMsImV4cCI6MjEwNTQzNzU3M30.8CATIeBvbe9El3oKbhGgh4gy0FK1wIXgY1HI8nbDOlw"
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
 # Connect to your cloud vault
 @st.cache_resource
