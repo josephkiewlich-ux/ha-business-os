@@ -113,40 +113,68 @@ with tab2:
             df = pd.DataFrame(cloud_leads)
             
             # Show the main database table
-            cols_to_show = ["company_name", "status", "hardware_installed", "contact_name", "phone"]
+            cols_to_show = ["company_name", "status", "hardware_installed", "install_fee", "monthly_retainer"]
             available_cols = [c for c in cols_to_show if c in df.columns]
             st.dataframe(df[available_cols], use_container_width=True, hide_index=True)
             
             st.divider()
             
-            # 🛠️ THE HARDWARE UPGRADE FORM
-            st.markdown("#### 🛠️ Log New Hardware Installation")
+            # 🛠️ THE HARDWARE & BILLING UPGRADE FORM
+            st.markdown("#### 🛠️ Update Client & Billing")
             
-            # Create a dropdown to select a client
             lead_names = df['company_name'].tolist()
             selected_lead = st.selectbox("Select a Client:", lead_names)
             
             col1, col2 = st.columns(2)
             with col1:
                 new_status = st.selectbox("Status", ["Lead", "Active Client", "Maintenance Mode", "Declined"])
+                install_fee = st.number_input("Total Install Fee ($)", min_value=0, value=0, step=100)
+                monthly_fee = st.number_input("Monthly Retainer ($)", min_value=0, value=0, step=10)
             with col2:
-                hardware = st.text_area("Hardware Installed (e.g., 1x HA Green, 4x Yale Assure, 1x Zigbee dongle)")
+                hardware = st.text_area("Hardware Installed (e.g., 1x HA Green, 4x Yale Assure)", height=150)
                 
             if st.button("Update Client Record", type="primary"):
-                # Push the hardware updates to the cloud!
                 supabase.table("leads").update({
                     "status": new_status,
-                    "hardware_installed": hardware
+                    "hardware_installed": hardware,
+                    "install_fee": install_fee,
+                    "monthly_retainer": monthly_fee
                 }).eq("company_name", selected_lead).execute()
                 
-                st.success(f"✅ Hardware logged for {selected_lead}!")
-                st.rerun() # This instantly refreshes the page to show the new data
+                st.success(f"✅ Record updated for {selected_lead}!")
+                st.rerun()
                 
         else:
             st.info("No leads saved in your cloud database yet. Go hunt some in Tab 1!")
             
     except Exception as e:
         st.error(f"Error fetching from database: {e}")
+
+# --- TAB 3: FINANCIAL COMMAND CENTER ---
+with tab3:
+    st.markdown("### Financial Command Center")
+    
+    try:
+        if 'cloud_leads' in locals() and cloud_leads:
+            # Do the math on all clients
+            total_install_revenue = df['install_fee'].sum()
+            total_mrr = df['monthly_retainer'].sum()
+            active_clients = len(df[df['status'] == 'Active Client'])
+            
+            # Display the beautiful metrics
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total Install Revenue", f"${total_install_revenue:,.2f}", "One-time cash")
+            col2.metric("Monthly Recurring (MRR)", f"${total_mrr:,.2f}/mo", "Passive income")
+            col3.metric("Active Clients", f"{active_clients}", "Paying customers")
+            
+            st.divider()
+            st.markdown("#### Revenue Breakdown")
+            st.bar_chart(df.set_index("company_name")[["install_fee", "monthly_retainer"]])
+            
+        else:
+            st.info("Log your first paid client in the CRM tab to see your financials!")
+    except Exception as e:
+        st.error(f"Could not load financials: {e}")
 # --- TAB 3: FINANCIALS ---
 with tab3:
     st.markdown("### Financial Command Center")
