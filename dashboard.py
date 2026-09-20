@@ -57,8 +57,32 @@ def hunt_leads(url):
 # ==========================================
 # 3. VISUAL DASHBOARD
 # ==========================================
+# ==========================================
+# 3. VISUAL DASHBOARD & SECURITY
+# ==========================================
 st.set_page_config(page_title="HA Business OS", page_icon="🔐", layout="wide")
 
+# THE SECURITY BOUNCER
+def check_password():
+    if "password_correct" not in st.session_state:
+        st.session_state["password_correct"] = False
+
+    if not st.session_state["password_correct"]:
+        st.title("🔒 Login Required")
+        pwd = st.text_input("Enter Password to access the Business OS:", type="password")
+        if st.button("Login"):
+            if pwd == st.secrets["DASHBOARD_PASSWORD"]:
+                st.session_state["password_correct"] = True
+                st.rerun()
+            else:
+                st.error("❌ Incorrect Password")
+        return False
+    return True
+
+if not check_password():
+    st.stop() # Stops the rest of the dashboard from loading if they aren't logged in!
+
+# (The rest of your code stays exactly the same below this!)
 st.title("🔐 Home Assistant Business OS")
 
 tab1, tab2, tab3 = st.tabs(["🎯 AI Lead Hunter", "👥 Client CRM", "💰 Financials"])
