@@ -9,17 +9,16 @@ import google.generativeai as genai
 from supabase import create_client, Client
 
 # ==========================================
-# 1. SETUP CREDENTIALS
+# 1. SETUP CREDENTIALS (SECURED)
 # ==========================================
-# Google Gemini Key
-GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]genai.configure(api_key=GEMINI_API_KEY)
+# Pulling keys directly from the Streamlit cloud safe
+GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('models/gemini-3.6-flash')
 
-# Supabase Cloud Database Credentials
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
-# Connect to your cloud vault
 @st.cache_resource
 def get_supabase_client() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -86,14 +85,12 @@ with tab1:
             elif leads:
                 st.success(f"✅ Found {len(leads)} potential client(s)!")
                 
-                # Push directly to Supabase cloud database
                 try:
                     supabase.table("leads").insert(leads).execute()
                     st.toast("Saved directly to cloud database!", icon="☁️")
                 except Exception as db_err:
                     st.warning(f"Note: Could not save to database: {db_err}")
                 
-                # Show results in UI
                 for lead in leads:
                     with st.container(border=True):
                         st.subheader(f"🏢 {lead.get('company_name')}")
@@ -108,14 +105,12 @@ with tab1:
 with tab2:
     st.markdown("### Active Leads & Clients (Cloud Vault)")
     
-    # Fetch live data straight from Supabase
     try:
         response = supabase.table("leads").select("*").order("created_at", desc=True).execute()
         cloud_leads = response.data
         
         if cloud_leads:
             df = pd.DataFrame(cloud_leads)
-            # Reorganize columns for a clean view
             cols_to_show = ["company_name", "contact_name", "phone", "email", "custom_sales_pitch", "created_at"]
             available_cols = [c for c in cols_to_show if c in df.columns]
             st.dataframe(df[available_cols], use_container_width=True, hide_index=True)
